@@ -129,21 +129,26 @@ for uploaded_file in uploaded_files:
         if not found_point:
             st.warning(f"No valid trackpoints in file: {uploaded_file.name}")
             continue
-    elif uploaded_file.name.endswith('.fit.gz'):
-        with gzip.open(io.BytesIO(content), 'rb') as f:
-            with fitdecode.FitReader(f) as fit_reader:
+    elif uploaded_file.name.endswith('.fit','.fit.gz'):
+        file_obj = gzip.open(io.BytesIO(content), 'rb') if uploaded_file.name.endswith('.gz') else io.BytesIO(content)
+        with fitdecode.FitReader(file_obj) as fit_reader:
                 for frame in fit_reader:
                     if frame.frame_type == fitdecode.FIT_FRAME_DATA and frame.name == "record":
                         record_data = {field.name: field.value for field in frame.fields}
 
-                        if "position_lat" in record_data and "position_long" in record_data:
-                            lat = record_data["position_lat"] * (180 / 2**31)
-                            lon = record_data["position_long"] * (180 / 2**31)
+                        lat_raw = record_data.get("position_lat")
+                        lon_raw = record_data.get("position_long")
 
-                            route_info.append({
-                                "latitude": lat,
-                                "longitude": lon,
-                            })
+                        if lat_raw is None or lon_raw is None:
+                            continue
+
+                        lat = lat_raw * (180 / 2**31)
+                        lon = lon_raw * (180 / 2**31)
+
+                        route_info.append({
+                            "latitude": lat,
+                            "longitude": lon,
+                        })
     else:
         st.error("Unsupported file type. Please upload a .gpx, .tcx, or .gz file.")
         st.stop()

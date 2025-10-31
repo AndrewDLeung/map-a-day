@@ -129,7 +129,7 @@ for uploaded_file in uploaded_files:
         if not found_point:
             st.warning(f"No valid trackpoints in file: {uploaded_file.name}")
             continue
-    elif uploaded_file.name.endswith('.fit','.fit.gz'):
+    elif uploaded_file.name.endswith(('.fit','.fit.gz')):
         file_obj = gzip.open(io.BytesIO(content), 'rb') if uploaded_file.name.endswith('.gz') else io.BytesIO(content)
         with fitdecode.FitReader(file_obj) as fit_reader:
                 for frame in fit_reader:

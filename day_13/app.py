@@ -9,6 +9,8 @@ import io
 import xml.etree.ElementTree as ET
 import math
 import numpy as np
+import fitdecode
+from io import BytesIO
 
 st.title('Plot My Runs')
 
@@ -127,6 +129,21 @@ for uploaded_file in uploaded_files:
         if not found_point:
             st.warning(f"No valid trackpoints in file: {uploaded_file.name}")
             continue
+    elif uploaded_file.name.endswith('.fit.gz'):
+        with gzip.open(io.BytesIO(content), 'rb') as f:
+            with fitdecode.FitReader(f) as fit_reader:
+                for frame in fit_reader:
+                    if frame.frame_type == fitdecode.FIT_FRAME_DATA and frame.name == "record":
+                        record_data = {field.name: field.value for field in frame.fields}
+
+                        if "position_lat" in record_data and "position_long" in record_data:
+                            lat = record_data["position_lat"] * (180 / 2**31)
+                            lon = record_data["position_long"] * (180 / 2**31)
+
+                            route_info.append({
+                                "latitude": lat,
+                                "longitude": lon,
+                            })
     else:
         st.error("Unsupported file type. Please upload a .gpx, .tcx, or .gz file.")
         st.stop()
@@ -154,6 +171,7 @@ line_color = st.color_picker("Pick a Line Color", "#00f900")
 background_color = st.color_picker("Pick Background Color", "#FFFFFF")
 
 n_routes = len(strava_routes_gdf)
+
 
 if n_routes == 0:
     st.write("No routes to display.")

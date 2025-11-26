@@ -11,6 +11,7 @@ import math
 import numpy as np
 import fitdecode
 from io import BytesIO
+import file_parsing_functions as fpf
 
 st.title('Plot My Runs')
 
@@ -40,115 +41,15 @@ strava_routes = []
 
 for uploaded_file in uploaded_files:
 
-    content = uploaded_file.read()
-    route_info = []
+    if uploaded_file.name.endswith('.gpx','.gpx.gz'):
+        route_info = fpf.parse_gpx(uploaded_file)
 
-    if uploaded_file.name.endswith('.gpx.gz'):
-        with gzip.open(io.BytesIO(content), 'rt') as f:
-            gpx_content = f.read()
-            gpx = gpxpy.parse(gpx_content)
-        
-        for track in gpx.tracks:
-            for segment in track.segments:
-                for point in segment.points:
-                    route_info.append({
-                        'latitude': point.latitude,
-                        'longitude': point.longitude,
-                        'elevation': point.elevation
-                    })
+    elif uploaded_file.name.endswith('.tcx','.tcx.gz'):
+        route_info = fpf.parse_tcx(uploaded_file)
 
-
-    elif uploaded_file.name.endswith('.gpx'):
-        gpx = gpxpy.parse(io.StringIO(content.decode('utf-8')))
-        for track in gpx.tracks:
-            for segment in track.segments:
-                for point in segment.points:
-                    route_info.append({
-                        'latitude': point.latitude,
-                        'longitude': point.longitude,
-                        'elevation': point.elevation
-                    })
-    elif uploaded_file.name.endswith('.tcx.gz'):
-        with gzip.open(io.BytesIO(content), 'rt') as f:
-            tcx_content = f.read().lstrip() 
-            tree = ET.ElementTree(ET.fromstring(tcx_content))
-        
-        root = tree.getroot()
-        namespace_uri = root.tag.split('}')[0].strip('{')
-        ns = {'tcx': namespace_uri}
-
-        found_point = False
-
-        for tp in root.findall('.//tcx:Trackpoint', ns):
-            pos = tp.find('tcx:Position', ns)
-            ele = tp.find('tcx:AltitudeMeters', ns)
-
-            lat = lon = None
-            if pos is not None:
-                lat = pos.find('tcx:LatitudeDegrees', ns)
-                lon = pos.find('tcx:LongitudeDegrees', ns)
-
-            if lat is not None and lon is not None:
-                route_info.append({
-                    'latitude': float(lat.text),
-                    'longitude': float(lon.text),
-                    'elevation': float(ele.text) if ele is not None else None
-                })
-                found_point = True
-
-        if not found_point:
-            st.warning(f"No valid trackpoints in file: {uploaded_file.name}")
-            continue
-    elif uploaded_file.name.endswith('.tcx'):
-        tcx_content = content.decode('utf-8').lstrip() 
-        tree = ET.ElementTree(ET.fromstring(tcx_content))
-        
-        root = tree.getroot()
-        namespace_uri = root.tag.split('}')[0].strip('{')
-        ns = {'tcx': namespace_uri}
-
-        found_point = False
-
-        for tp in root.findall('.//tcx:Trackpoint', ns):
-            pos = tp.find('tcx:Position', ns)
-            ele = tp.find('tcx:AltitudeMeters', ns)
-
-            lat = lon = None
-            if pos is not None:
-                lat = pos.find('tcx:LatitudeDegrees', ns)
-                lon = pos.find('tcx:LongitudeDegrees', ns)
-
-            if lat is not None and lon is not None:
-                route_info.append({
-                    'latitude': float(lat.text),
-                    'longitude': float(lon.text),
-                    'elevation': float(ele.text) if ele is not None else None
-                })
-                found_point = True
-
-        if not found_point:
-            st.warning(f"No valid trackpoints in file: {uploaded_file.name}")
-            continue
     elif uploaded_file.name.endswith(('.fit','.fit.gz')):
-        file_obj = gzip.open(io.BytesIO(content), 'rb') if uploaded_file.name.endswith('.gz') else io.BytesIO(content)
-        with fitdecode.FitReader(file_obj) as fit_reader:
-                for frame in fit_reader:
-                    if frame.frame_type == fitdecode.FIT_FRAME_DATA and frame.name == "record":
-                        record_data = {field.name: field.value for field in frame.fields}
+        route_info = fpf.parse_fit(uploaded_file)
 
-                        lat_raw = record_data.get("position_lat")
-                        lon_raw = record_data.get("position_long")
-
-                        if lat_raw is None or lon_raw is None:
-                            continue
-
-                        lat = lat_raw * (180 / 2**31)
-                        lon = lon_raw * (180 / 2**31)
-
-                        route_info.append({
-                            "latitude": lat,
-                            "longitude": lon,
-                        })
     else:
         st.error("Unsupported file type. Please upload a .gpx, .tcx, or .gz file.")
         st.stop()

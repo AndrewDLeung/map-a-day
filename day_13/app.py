@@ -114,6 +114,7 @@ elif st.button("Plot my routes!"):
 
         for routes, ax in zip(strava_routes_gdf.geometry, axes):
             gp.GeoDataFrame(geometry=[routes], crs="EPSG:4326").plot(ax=ax, linewidth=2, color=line_color)
+            ctx.add_basemap(ax, source=ctx.providers.Stamen.Terrain)
             ax.set_axis_off()
         
         for ax in axes[n_routes:]:

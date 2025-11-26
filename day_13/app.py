@@ -89,7 +89,7 @@ elif st.button("Plot my routes!"):
         fig, ax = plt.subplots(figsize=(12, 12))
         strava_routes_gdf.plot(ax=ax, linewidth=2, color=line_color)
         ax.set_axis_off()
-        ctx.add_basemap(ax, source=ctx.providers.Stamen.Terrain)
+        ctx.add_basemap(ax, source='Stamen.Terrain')
         # ax.set_facecolor(background_color)
         st.pyplot(fig)
         img_buffer = io.BytesIO()
@@ -114,7 +114,7 @@ elif st.button("Plot my routes!"):
 
         for routes, ax in zip(strava_routes_gdf.geometry, axes):
             gp.GeoDataFrame(geometry=[routes], crs="EPSG:4326").plot(ax=ax, linewidth=2, color=line_color)
-            ctx.add_basemap(ax, source=ctx.providers.Stamen.Terrain)
+            ctx.add_basemap(ax, source="Stamen.Terrain")
             ax.set_axis_off()
         
         for ax in axes[n_routes:]:

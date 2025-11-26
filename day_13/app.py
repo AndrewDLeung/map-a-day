@@ -41,10 +41,10 @@ strava_routes = []
 
 for uploaded_file in uploaded_files:
 
-    if uploaded_file.name.endswith('.gpx','.gpx.gz'):
+    if uploaded_file.name.endswith(('.gpx','.gpx.gz')):
         route_info = fpf.parse_gpx(uploaded_file)
 
-    elif uploaded_file.name.endswith('.tcx','.tcx.gz'):
+    elif uploaded_file.name.endswith(('.tcx','.tcx.gz')):
         route_info = fpf.parse_tcx(uploaded_file)
 
     elif uploaded_file.name.endswith(('.fit','.fit.gz')):

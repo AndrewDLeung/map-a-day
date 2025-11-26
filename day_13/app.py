@@ -11,6 +11,7 @@ import math
 import numpy as np
 import fitdecode
 from io import BytesIO
+import contextily as ctx
 import file_parsing_functions as fpf
 
 st.title('Plot My Runs')
@@ -88,18 +89,12 @@ elif st.button("Plot my routes!"):
         fig, ax = plt.subplots(figsize=(12, 12))
         strava_routes_gdf.plot(ax=ax, linewidth=2, color=line_color)
         ax.set_axis_off()
-        ax.set_facecolor(background_color)
+        ctx.add_basemap(ax, source=ctx.providers.Stamen.Terrain)
+        # ax.set_facecolor(background_color)
         st.pyplot(fig)
         img_buffer = io.BytesIO()
         fig.savefig(img_buffer, format='png')
         img_buffer.seek(0)
-
-        st.download_button(
-                label="Download Plot",
-                data=img_buffer,
-                file_name="my_strava_plot.png",
-                mime="image/png"
-            )
 
     elif len(uploaded_files) > 1:
         st.write("Plotting multiple route...")
@@ -131,12 +126,12 @@ elif st.button("Plot my routes!"):
         fig.savefig(img_buffer, format='png')
         img_buffer.seek(0)
 
-        st.download_button(
-                label="Download Plot",
-                data=img_buffer,
-                file_name="my_strava_plot.png",
-                mime="image/png"
-            )
+    st.download_button(
+            label="Download Plot",
+            data=img_buffer,
+            file_name="my_strava_plot.png",
+            mime="image/png"
+        )
 
     
 
